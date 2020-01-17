@@ -25,7 +25,7 @@ You can use both `.json` and `.yml` and you have to use `quickfollow` as name fo
 | branch   | string   | remote branch name  
 | target   | string[] | list of local branches which requires merge  
 
-You can find an example at [here]().
+You can find an example at [here](https://github.com/accelforce/odakyudon/blob/26a8883f1354a4c99250ef762c00bf79d6e5f9e2/quickfollow.json).
 
 ## License
 
