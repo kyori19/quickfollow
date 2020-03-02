@@ -1,0 +1,45 @@
+version: 2
+
+jobs:
+  build:
+    docker:
+      - image: circleci/golang:1.12.5
+    working_directory: /go/src/github.com/kyori19/quickfollow
+    steps:
+      - checkout
+      - run: go get
+      - run: go install github.com/kyori19/quickfollow
+      - store_artifacts:
+          path: /go/bin/quickfollow
+          destination: quickfollow
+      - persist_to_workspace:
+          root: /go/bin
+          paths:
+            - quickfollow
+
+  release:
+    docker:
+      - image: circleci/golang:1.14.0
+    working_directory: /tmp/workspace
+    steps:
+      - attach_workspace:
+          at: /tmp/workspace
+      - run: go get github.com/tcnksm/ghr
+      - run: ghr -t ${GITHUB_TOKEN} -u ${CIRCLE_PROJECT_USERNAME} -r ${CIRCLE_PROJECT_REPONAME} -c ${CIRCLE_SHA1} ${CIRCLE_TAG} .
+
+workflows:
+  version: 2
+  push:
+    jobs:
+      - build:
+          filters:
+            tags:
+              only: /.*/
+      - release:
+          requires:
+            - build
+          filters:
+            tags:
+              only: /.*/
+            branches:
+              ignore: /.*/
