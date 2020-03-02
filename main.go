@@ -11,12 +11,14 @@ import (
 
 var (
   errWorkingTreeIsNotClean = errors.New("Working tree not clean")
+  errMergeConflict = errors.New("Merge conflicted")
 )
 
 func main() {
   c := initContext()
 
   var noPush bool
+  var noFix bool
 
   rootCmd := &cobra.Command {
     Use: "quickfollow [Repository Path]",
@@ -30,18 +32,19 @@ func main() {
       }
 
       c.info("==QuickFollow Start==")
-      act(c, path, noPush)
+      act(c, path, noPush, noFix)
 
       c.next("E")
       c.info("==QuickFollow End==")
     },
   }
   rootCmd.Flags().BoolVar(&noPush, "no-push", false, "Don't execute \"git push --all\"")
+  rootCmd.Flags().BoolVar(&noFix, "no-fix", false, "Cause panic when merge conflicts")
 
   rootCmd.Execute()
 }
 
-func act(c *context, path string, noPush bool) {
+func act(c *context, path string, noPush bool, noFix bool) {
   c.next("S")
   config := load(c, path)
 
@@ -49,7 +52,7 @@ func act(c *context, path string, noPush bool) {
   fetch(c, path, config)
 
   c.next("M")
-  requireMerge := followAll(c, config, path)
+  requireMerge := followAll(c, config, path, noFix)
 
   c.next("J")
   joinAll(c, path, requireMerge)
@@ -68,7 +71,7 @@ func fetch(c *context, path string, config config) {
   c.info("<< done")
 }
 
-func followAll(c *context, config config, path string) []string {
+func followAll(c *context, config config, path string, noFix bool) []string {
   c.info("Total target branch: %d", len(config.target))
   requireMerge := make([]string, 0)
   for i, n := range config.target {
@@ -77,7 +80,7 @@ func followAll(c *context, config config, path string) []string {
       c.panic(errWorkingTreeIsNotClean)
     }
     c.info("Next branch %s (%d/%d)", n, i + 1, len(config.target))
-    if follow(c, config, path, n) {
+    if follow(c, config, path, n, noFix) {
       requireMerge = append(requireMerge, n)
     }
     c.back()
@@ -99,13 +102,16 @@ func cmd(path string, command string, a ...string) *exec.Cmd {
   return cmd
 }
 
-func follow(c *context, config config, path string, name string) bool {
+func follow(c *context, config config, path string, name string, noFix bool) bool {
   c.next("C")
   checkout(c, path, name)
 
   c.next("M")
   merge(c, path, fmt.Sprintf("%s/%s", config.upstream, config.branch))
   if !isClean(path) {
+    if noFix {
+      c.panic(errMergeConflict)
+    }
     c.info("Merge conflicted! Please resolve all conflicts and commit")
     waitCommit(path)
     c.info("Conflict resolved. Working tree clean")
