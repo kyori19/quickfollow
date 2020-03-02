@@ -16,25 +16,32 @@ var (
 func main() {
   c := initContext()
 
+  var noPush bool
+
   rootCmd := &cobra.Command {
     Use: "quickfollow [Repository Path]",
     Short: "Follows upstream branch",
     Args: cobra.MaximumNArgs(1),
+    TraverseChildren: true,
     Run: func(cmd *cobra.Command, args []string) {
       path := "."
       if len(args) > 0 {
         path = args[0]
       }
-      start(c, path)
+
+      c.info("==QuickFollow Start==")
+      act(c, path, noPush)
+
+      c.next("E")
+      c.info("==QuickFollow End==")
     },
   }
+  rootCmd.Flags().BoolVar(&noPush, "no-push", false, "Don't execute \"git push --all\"")
 
   rootCmd.Execute()
 }
 
-func start(c *context, path string) {
-  c.info("==QuickFollow Start==")
-
+func act(c *context, path string, noPush bool) {
   c.next("S")
   config := load(c, path)
 
@@ -47,11 +54,12 @@ func start(c *context, path string) {
   c.next("J")
   joinAll(c, path, requireMerge)
 
+  if noPush {
+    return
+  }
+
   c.next("P")
   push(c, path)
-
-  c.next("E")
-  c.info("==QuickFollow End==")
 }
 
 func fetch(c *context, path string, config config) {
