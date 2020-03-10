@@ -8,6 +8,7 @@ import (
 
 type config struct {
   upstream string
+  remote string
   branch string
   target []string
 }
@@ -27,11 +28,13 @@ func load(c *context, path string) config {
   }
 
   checkIsSet(c, "upstream")
+  viper.SetDefault("remote", "")
   viper.SetDefault("branch", "master")
   checkIsSet(c, "target")
 
   return config {
     upstream: viper.GetString("upstream"),
+    remote: viper.GetString("remote"),
     branch: viper.GetString("branch"),
     target: viper.GetStringSlice("target"),
   }

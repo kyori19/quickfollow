@@ -66,6 +66,11 @@ func act(c *context, path string, noPush bool, noFix bool) {
 }
 
 func fetch(c *context, path string, config config) {
+  if config.remote != "" {
+    c.info(">> git remote add %s %s", config.upstream, config.remote)
+    cmd(path, "git", "remote", "add", config.upstream, config.remote).Run()
+    c.info("<< done")
+  }
   c.info(">> git fetch %s", config.upstream)
   cmd(path, "git", "fetch", config.upstream).Run()
   c.info("<< done")

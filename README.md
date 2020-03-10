@@ -22,6 +22,7 @@ You can use both `.json` and `.yml` and you have to use `quickfollow` as name fo
 | name     | type     | details  
 |----------|----------|--------  
 | upstream | string   | remote name  
+| remote   | string   | remote address
 | branch   | string   | remote branch name  
 | target   | string[] | list of local branches which requires merge  
 
